@@ -41,6 +41,18 @@ class StoryViewModel(private val application: Application) : ViewModel(), TextTo
             Page(
                 image = "https://via.placeholder.com/300",
                 words = "This is the second page".split(" ").map { Word(it) }
+            ),
+            Page(
+                image = "https://via.placeholder.com/300",
+                words = "This is the third page".split(" ").map { Word(it) }
+            ),
+            Page(
+                image = "https://via.placeholder.com/300",
+                words = "This is the fourth page".split(" ").map { Word(it) }
+            ),
+            Page(
+                image = "https://via.placeholder.com/300",
+                words = "This is the fifth page".split(" ").map { Word(it) }
             )
         )
         return Story(title = "My First Story", pages = pages)
@@ -59,6 +71,20 @@ class StoryViewModel(private val application: Application) : ViewModel(), TextTo
 
     fun stopListening() {
         speechRecognizer.stopListening()
+    }
+
+    fun nextPage() {
+        _story.value?.let {
+            if (_currentPage.value < it.pages.size - 1) {
+                _currentPage.value++
+            }
+        }
+    }
+
+    fun previousPage() {
+        if (_currentPage.value > 0) {
+            _currentPage.value--
+        }
     }
 
     private fun updateWordAsRead(text: String) {

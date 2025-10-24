@@ -7,7 +7,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,6 +32,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -66,28 +73,43 @@ fun StoryScreen() {
 
     story?.let {
         val page = it.pages[currentPage]
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                Button(onClick = { storyViewModel.previousPage() }) {
+                    Text(text = "Previous")
+                }
+                Button(onClick = { storyViewModel.nextPage() }) {
+                    Text(text = "Next")
+                }
+            }
             AsyncImage(
                 model = page.image,
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
+                    .fillMaxHeight(0.3f)
             )
-            FlowRow(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
             ) {
-                page.words.forEach { word ->
-                    Text(
-                        text = word.text,
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .background(if (word.isRead) Color.Yellow else Color.Transparent)
-                            .clickable { storyViewModel.speakWord(word) }
-                            .padding(4.dp)
-                    )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    page.words.forEach { word ->
+                        Text(
+                            text = word.text,
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .background(if (word.isRead) Color.Yellow else Color.Transparent)
+                                .clickable { storyViewModel.speakWord(word) }
+                                .padding(4.dp)
+                        )
+                    }
                 }
             }
             Button(
