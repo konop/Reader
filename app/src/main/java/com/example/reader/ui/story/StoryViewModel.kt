@@ -15,8 +15,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import java.util.Locale
+import io.elevenlabs.ConversationClient
+import io.elevenlabs.ConversationConfig
+import io.elevenlabs.ConversationSession
+import com.example.reader.BuildConfig
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class StoryViewModel(private val application: Application) : ViewModel(), TextToSpeech.OnInitListener, RecognitionListener {
+
+    private var conversationSession: ConversationSession? = null
 
     private val _story = MutableStateFlow<Story?>(null)
     val story: StateFlow<Story?> = _story
@@ -30,6 +39,16 @@ class StoryViewModel(private val application: Application) : ViewModel(), TextTo
     init {
         _story.value = createDummyStory()
         speechRecognizer.setRecognitionListener(this)
+
+        // Initialize Eleven Labs SDK
+        // For public agents, use agentId. For private agents, a conversationToken is generated on the backend.
+        // Never embed API keys directly in client-side code.
+        val config = ConversationConfig(
+            agentId = "agent_4401k8bze9msf77rhmq7dcjdd5v8" // Eleven Labs Public Agent ID
+        )
+        viewModelScope.launch {
+            conversationSession = ConversationClient.startSession(config, application)
+        }
     }
 
     private fun createDummyStory(): Story {
@@ -74,16 +93,22 @@ class StoryViewModel(private val application: Application) : ViewModel(), TextTo
     }
 
     fun nextPage() {
-        _story.value?.let {
-            if (_currentPage.value < it.pages.size - 1) {
+        _story.value?.let { currentStory ->
+            if (_currentPage.value < currentStory.pages.size - 1) {
                 _currentPage.value++
+                // Force recomposition by updating the story object
+                _story.value = currentStory.copy(pages = currentStory.pages)
             }
         }
     }
 
     fun previousPage() {
-        if (_currentPage.value > 0) {
-            _currentPage.value--
+        _story.value?.let { currentStory ->
+            if (_currentPage.value > 0) {
+                _currentPage.value--
+                // Force recomposition by updating the story object
+                _story.value = currentStory.copy(pages = currentStory.pages) // Force recomposition
+            }
         }
     }
 
@@ -119,6 +144,11 @@ class StoryViewModel(private val application: Application) : ViewModel(), TextTo
         tts.stop()
         tts.shutdown()
         speechRecognizer.destroy()
+        conversationSession?.let {
+            runBlocking {
+                it.endSession()
+            }
+        }
     }
 
     // RecognitionListener methods
